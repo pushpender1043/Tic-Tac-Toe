@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Tic-Tac-Toe | AI Enabled</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS STYLING --- */
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --neon-x: #00f2ff; /* Cyan */
+            --neon-o: #ff0055; /* Pink */
+            --text-color: #e2e8f0;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at center, #1e293b, #0f172a);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Container */
+        .game-container {
+            background: var(--glass-bg);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, var(--neon-x), var(--neon-o));
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .score-box {
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            min-width: 100px;
+        }
+        .score-box.x-score { border-bottom: 3px solid var(--neon-x); }
+        .score-box.o-score { border-bottom: 3px solid var(--neon-o); }
+
+        /* Game Board */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            height: 100px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .cell:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        /* Mark Colors & Glow */
+        .cell.x { color: var(--neon-x); text-shadow: 0 0 15px var(--neon-x); }
+        .cell.o { color: var(--neon-o); text-shadow: 0 0 15px var(--neon-o); }
+
+        /* Status Message */
+        #message {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            min-height: 1.5rem;
+            color: #94a3b8;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .btn-restart {
+            background: linear-gradient(45deg, var(--neon-x), #0099ff);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        .btn-mode {
+            background: transparent;
+            border: 2px solid var(--text-color);
+            color: var(--text-color);
+        }
+        
+        .btn-mode.active {
+            background: var(--text-color);
+            color: #000;
+        }
+
+        button:hover { transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+
+        /* Win Animation Class */
+        .cell.win {
+            background: rgba(255, 255, 255, 0.2);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>Tic Tac Toe</h1>
+        
+        <div class="scoreboard">
+            <div class="score-box x-score">P1 (X): <span id="scoreX">0</span></div>
+            <div class="score-box o-score">P2 (O): <span id="scoreO">0</span></div>
+        </div>
+
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <div id="message">Player X's Turn</div>
+
+        <div class="controls">
+            <button class="btn-restart" onclick="restartGame()">Restart</button>
+            <button class="btn-mode active" id="pvpBtn" onclick="setMode('PvP')">2 Player</button>
+            <button class="btn-mode" id="aiBtn" onclick="setMode('AI')">vs AI</button>
+        </div>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT LOGIC --- */
+        const board = document.getElementById('board');
+        const cells = document.querySelectorAll('.cell');
+        const message = document.getElementById('message');
+        const scoreXEl = document.getElementById('scoreX');
+        const scoreOEl = document.getElementById('scoreO');
+        
+        let currentPlayer = 'X';
+        let gameBoard = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        let gameMode = 'PvP'; // PvP or AI
+        let scores = { X: 0, O: 0 };
+
+        const winningCombos = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Cols
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        cells.forEach(cell => {
+            cell.addEventListener('click', handleCellClick);
+        });
+
+        function handleCellClick(e) {
+            const cell = e.target;
+            const index = cell.getAttribute('data-index');
+
+            if (gameBoard[index] !== '' || !gameActive) return;
+
+            // Player Move
+            makeMove(index, cell);
+
+            // If game active and AI mode, let AI play
+            if (gameActive && gameMode === 'AI' && currentPlayer === 'O') {
+                setTimeout(aiMove, 500); // Slight delay for realism
+            }
+        }
+
+        function makeMove(index, cell) {
+            gameBoard[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+
+            if (checkWin(currentPlayer)) {
+                endGame(false);
+            } else if (isDraw()) {
+                endGame(true);
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                message.textContent = `${currentPlayer === 'X' ? 'Player X' : (gameMode === 'AI' ? 'AI' : 'Player O')}'s Turn`;
+            }
+        }
+
+        // --- SIMPLE AI LOGIC ---
+        function aiMove() {
+            if (!gameActive) return;
+
+            // 1. Try to Win
+            let move = findBestMove('O');
+            // 2. If can't win, Block X
+            if (move === -1) move = findBestMove('X');
+            // 3. If no strategic move, pick Random
+            if (move === -1) {
+                let available = gameBoard.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
+                move = available[Math.floor(Math.random() * available.length)];
+            }
+
+            const cell = cells[move];
+            makeMove(move, cell);
+        }
+
+        function findBestMove(player) {
+            for (let combo of winningCombos) {
+                let [a, b, c] = combo;
+                if (gameBoard[a] === player && gameBoard[b] === player && gameBoard[c] === '') return c;
+                if (gameBoard[a] === player && gameBoard[c] === player && gameBoard[b] === '') return b;
+                if (gameBoard[b] === player && gameBoard[c] === player && gameBoard[a] === '') return a;
+            }
+            return -1;
+        }
+
+        function checkWin(player) {
+            return winningCombos.some(combo => {
+                if (combo.every(index => gameBoard[index] === player)) {
+                    highlightWin(combo);
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        function highlightWin(combo) {
+            combo.forEach(index => cells[index].classList.add('win'));
+        }
+
+        function isDraw() {
+            return !gameBoard.includes('');
+        }
+
+        function endGame(draw) {
+            gameActive = false;
+            if (draw) {
+                message.textContent = "It's a Draw!";
+                message.style.color = "#ecc552";
+            } else {
+                message.textContent = `${currentPlayer} Wins! 🎉`;
+                message.style.color = currentPlayer === 'X' ? 'var(--neon-x)' : 'var(--neon-o)';
+                scores[currentPlayer]++;
+                updateScoreboard();
+            }
+        }
+
+        function updateScoreboard() {
+            scoreXEl.textContent = scores.X;
+            scoreOEl.textContent = scores.O;
+        }
+
+        function restartGame() {
+            gameBoard = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            currentPlayer = 'X';
+            message.textContent = "Player X's Turn";
+            message.style.color = "#94a3b8";
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell'; // Reset classes
+            });
+        }
+
+        function setMode(mode) {
+            gameMode = mode;
+            restartGame();
+            scores = { X: 0, O: 0 }; // Reset scores on mode change
+            updateScoreboard();
+            
+            // Toggle active button styling
+            document.getElementById('pvpBtn').classList.toggle('active', mode === 'PvP');
+            document.getElementById('aiBtn').classList.toggle('active', mode === 'AI');
+            
+            // Update labels for scoreboard
+            document.querySelector('.o-score').innerHTML = mode === 'AI' ? 'AI (O): <span id="scoreO">0</span>' : 'P2 (O): <span id="scoreO">0</span>';
+            
+            // Re-grab element references after innerHTML change
+            // (Simple fix, though cleaner ways exist)
+            scoreOEl = document.getElementById('scoreO'); 
+            // Actually, scoreOEl variable reference might break. Let's just fix it properly:
+             document.getElementById('scoreO').textContent = '0';
+        }
+    </script>
+</body>
+</html>
