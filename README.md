@@ -1,8 +1,5 @@
 # 🎮 Neon Tic-Tac-Toe (AI Enabled)
 
-![Tic-Tac-Toe Banner](<img width="866" height="425" alt="image" src="https://github.com/user-attachments/assets/76c32714-2461-4c78-abd0-f2d60800f17e" />
-)
-
 > A futuristic, neon-styled Tic-Tac-Toe game featuring a smart AI opponent, glowing UI, and real-time scoreboard. Built with vanilla JavaScript.
 
 ## 🚀 Live Demo
